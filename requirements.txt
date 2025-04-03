@@ -6,4 +6,5 @@ joblib
 matplotlib
 psycopg2-binary
 xgboost
+beautifulsoup4
 
