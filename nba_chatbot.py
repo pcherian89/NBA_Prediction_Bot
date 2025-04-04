@@ -100,15 +100,15 @@ engine = create_engine(f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT
 st.set_page_config(page_title="AI-Powered NBA Game Analyzer", layout="wide")
 from PIL import Image
 
-# Load the logo image (make sure it's in your app folder or repo)
+# Load logo
 nba_logo = Image.open("nba_logo.png")
 
-col1, col2 = st.columns([1, 8])
+# Display title with better spacing and larger logo
+col1, col2 = st.columns([0.6, 8])
 with col1:
-    st.image(nba_logo, width=40)  # adjust width as needed
+    st.image(nba_logo, width=55)  # Adjusted size for better alignment
 with col2:
-    st.markdown("## AI-Powered NBA Game Analyzer")
-
+    st.markdown("<h1 style='margin-top: 10px;'>AI-Powered NBA Game Analyzer</h1>", unsafe_allow_html=True)
 
 st.markdown("""
 Welcome to the **NBA Analytics Platform**!  
