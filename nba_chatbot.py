@@ -103,12 +103,11 @@ from PIL import Image
 nba_logo = Image.open("nba_logo.png")
 
 st.markdown("""
-<div style="display: flex; align-items: center;">
-    <img src="https://raw.githubusercontent.com/pcherian89/NBA_Prediction_Bot/main/nba_logo.png" width="70" style="margin-right: 15px;" />
+<div style="display: flex; align-items: center; justify-content: flex-start;">
+    <img src="https://raw.githubusercontent.com/pcherian89/NBA_Prediction_Bot/main/nba_logo.png" width="65" style="margin-right: 15px;" />
     <h1 style="margin: 0; font-size: 42px;">AI-Powered NBA Game Analyzer</h1>
 </div>
 """, unsafe_allow_html=True)
-
 
 st.markdown("""
 Welcome to the **NBA Analytics Platform**!  
