@@ -104,7 +104,7 @@ from PIL import Image
 nba_logo = Image.open("nba_logo.png")
 
 # Display title with better spacing and larger logo
-col1, col2 = st.columns([0.6, 8])
+col1, col2 = st.columns([0.2, 7.8])
 with col1:
     st.image(nba_logo, width=55)  # Adjusted size for better alignment
 with col2:
