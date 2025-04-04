@@ -433,14 +433,14 @@ if (
         odds_cols = st.columns([3, 1.5, 2, 2])
         odds_cols[0].markdown(f"**{result['home_team']} (Home)**")
         odds_cols[1].markdown(f"{result['home_final_probability']:.0%}")
-        odds_cols[2].markdown(f"{home_decimal}")
+        odds_cols[2].markdown(f"{home_decimal:.2f}")
         odds_cols[3].markdown(f"{home_american}")
 
         # Row 2 – Away
         odds_cols = st.columns([3, 1.5, 2, 2])
         odds_cols[0].markdown(f"**{result['away_team']} (Away)**")
         odds_cols[1].markdown(f"{result['away_final_probability']:.0%}")
-        odds_cols[2].markdown(f"{away_decimal}")
+        odds_cols[2].markdown(f"{away_decimal:.2f}")
         odds_cols[3].markdown(f"{away_american}")
 
 
