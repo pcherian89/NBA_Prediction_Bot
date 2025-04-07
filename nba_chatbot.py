@@ -405,8 +405,20 @@ if (
 
 # ✅ Display visuals and insights if prediction exists
 if "prediction_result" in st.session_state and "agent" in st.session_state:
-    result = st.session_state.prediction_result
     agent = st.session_state.agent
+    result = st.session_state.prediction_result
+
+    st.markdown("### 📊 Win Probabilities for Warriors Players")
+    st.dataframe(agent.last_home_player_stats)
+
+    st.markdown("### 📊 Win Probabilities for Lakers Players")
+    st.dataframe(agent.last_away_player_stats)
+
+    st.markdown("### 🧠 Warriors - Last 10 Games")
+    st.dataframe(agent.last_home_team_df)
+
+    st.markdown("### 🧠 Lakers - Last 10 Games")
+    st.dataframe(agent.last_away_team_df)
 
     # 🎲 Convert Win % to Odds
     def win_prob_to_decimal_odds(prob):
@@ -459,62 +471,60 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
 
     # ✅ Insert LangChain Chatbot (AFTER all visuals)
     st.markdown("---")
-    with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=False):
-
-        # Step 1: Initialize chat memory
+    with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=True):
+    
         if "chat_history" not in st.session_state:
             st.session_state.chat_history = []
         if "chat_input" not in st.session_state:
             st.session_state.chat_input = ""
-
-        # Step 2: Input box
+    
         st.session_state.chat_input = st.text_input(
             "🧠 Type your question:",
             value=st.session_state.chat_input,
             key="chat_input_field"
         )
-
-        # Step 3: Run chatbot only if input given
-        if st.session_state.chat_input:
+    
+        if st.session_state.chat_input and "agent" in st.session_state:
+    
             from langchain_experimental.agents import create_pandas_dataframe_agent
             from langchain_openai import OpenAI
-
-            df_home_players = agent.last_home_player_stats.copy()
-            df_home_players["source"] = "home_player_stats"
-            df_away_players = agent.last_away_player_stats.copy()
-            df_away_players["source"] = "away_player_stats"
-            df_home_team = agent.last_home_team_df.copy()
-            df_home_team["source"] = "home_team_df"
-            df_away_team = agent.last_away_team_df.copy()
-            df_away_team["source"] = "away_team_df"
-
-            combined_df = pd.concat(
-                [df_home_players, df_away_players, df_home_team, df_away_team],
-                ignore_index=True
-            )
-
+    
+            agent = st.session_state.agent
+    
+            df_home = agent.last_home_player_stats.copy()
+            df_away = agent.last_away_player_stats.copy()
+            df_home["player_name"] = df_home["firstname"] + " " + df_home["lastname"]
+            df_away["player_name"] = df_away["firstname"] + " " + df_away["lastname"]
+            df_home["source"] = "home_players"
+            df_away["source"] = "away_players"
+    
+            df_team_home = agent.last_home_team_df.copy()
+            df_team_away = agent.last_away_team_df.copy()
+            df_team_home["source"] = "home_team"
+            df_team_away["source"] = "away_team"
+    
+            combined_df = pd.concat([df_home, df_away, df_team_home, df_team_away], ignore_index=True)
+    
             chatbot = create_pandas_dataframe_agent(
-                llm=OpenAI(temperature=0),
+                llm=ChatOpenAI(temperature=0),
                 df=combined_df,
                 verbose=False,
                 allow_dangerous_code=True
             )
-
+                
             response = chatbot.run(st.session_state.chat_input)
-
             st.session_state.chat_history.append(("You", st.session_state.chat_input))
             st.session_state.chat_history.append(("Bot", response))
             st.session_state.chat_input = ""
-
-        # Step 4: Display chat
+    
+        # Display chat history
         for role, msg in st.session_state.chat_history[::-1]:
-            bg_color = "#f1f1f1" if role == "You" else "#d1f5d3"
+            bg = "#f1f1f1" if role == "You" else "#d1f5d3"
             icon = "🧍" if role == "You" else "🤖"
             st.markdown(f"""
-                <div style="background-color:{bg_color};padding:10px;
-                border-radius:10px;margin-bottom:5px">
-                <b>{icon} {role}:</b> {msg}
-                </div>
+            <div style='background-color:{bg};padding:10px;border-radius:10px;margin-bottom:5px'>
+            <b>{icon} {role}:</b> {msg}
+            </div>
             """, unsafe_allow_html=True)
 
 # 👇 Input validation fallback
