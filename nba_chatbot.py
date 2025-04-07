@@ -14,9 +14,8 @@ from datetime import datetime
 import pytz
 from sqlalchemy import text
 from langchain_experimental.agents import create_pandas_dataframe_agent
-import os
-from langchain.agents.agent_toolkits.pandas.base import create_pandas_dataframe_agent
 from langchain_openai import ChatOpenAI
+
 os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
 TEAM_NAME_MAPPING = {
