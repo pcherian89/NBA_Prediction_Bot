@@ -14,6 +14,9 @@ from datetime import datetime
 import pytz
 from sqlalchemy import text
 
+if "prediction_ran" not in st.session_state:
+    st.session_state.prediction_ran = False
+
 
 TEAM_NAME_MAPPING = {
     "Golden State Warriors": "Warriors",
@@ -383,17 +386,33 @@ class GamePredictionAgent:
         }
     
 # ✅ Run Prediction
+
+if "prediction_ran" not in st.session_state:
+    st.session_state.prediction_ran = False
+
+# ✅ Run Prediction — only when button is clicked
 if (
     home_team != "Select a team" and away_team != "Select a team" and
     len(home_players) == 3 and len(away_players) == 3
 ):
     if st.button("🔮 Run Prediction"):
+        st.session_state.prediction_ran = True
+
         agent = GamePredictionAgent()
         result = agent.predict_game(home_team, away_team, home_players, away_players)
 
-        st.success("✅ Prediction complete!")
-        st.markdown("### 🎯 Final Win Probabilities")
-        st.markdown(f"<h3 style='text-align: center;'>{result['home_team']} (Home): <span style='color:{HOME_COLOR}'>{result['home_final_probability']:.2f}</span> &nbsp;&nbsp;|&nbsp;&nbsp; {result['away_team']} (Away): <span style='color:{AWAY_COLOR}'>{result['away_final_probability']:.2f}</span></h3>", unsafe_allow_html=True)
+        st.session_state.prediction_result = result
+        st.session_state.agent = agent
+
+
+# ✅ Display prediction results — after the button has been clicked
+if st.session_state.get("prediction_ran", False):
+    result = st.session_state.prediction_result
+    agent = st.session_state.agent
+
+    st.success("✅ Prediction complete!")
+    st.markdown("### 🎯 Final Win Probabilities")
+    st.markdown(f"<h3 style='text-align: center;'>{result['home_team']} (Home): <span style='color:{HOME_COLOR}'>{result['home_final_probability']:.2f}</span> &nbsp;&nbsp;|&nbsp;&nbsp; {result['away_team']} (Away): <span style='color:{AWAY_COLOR}'>{result['away_final_probability']:.2f}</span></h3>", unsafe_allow_html=True)
 
          # 🎲 Convert Win % to Odds
         def win_prob_to_decimal_odds(prob):
