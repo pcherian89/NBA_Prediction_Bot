@@ -444,6 +444,55 @@ if (
 
         st.markdown("---")
         st.markdown("📊 Run again above to test another matchup!")
+
+        st.markdown("---")
+        with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=False):
+
+            # Session state to store chat history
+            if "chat_history" not in st.session_state:
+                st.session_state.chat_history = []
+
+            # Chat input
+            user_q = st.text_input("🗨️ Type your question:")
+
+            if user_q:
+                from langchain_experimental.agents import create_pandas_dataframe_agent
+                from langchain_openai import OpenAI
+
+                # Build a single DataFrame context (you can combine if needed)
+                dfs = {
+                    "home_player_stats": agent.last_home_player_stats,
+                    "away_player_stats": agent.last_away_player_stats,
+                    "home_team_df": agent.last_home_team_df,
+                    "away_team_df": agent.last_away_team_df
+                }
+
+                # Create the Langchain chatbot agent
+                chatbot = create_pandas_dataframe_agent(
+                    llm=OpenAI(temperature=0),
+                    df=dfs,
+                    verbose=False,
+                    allow_dangerous_code=True
+                )
+
+                # Get response
+                response = chatbot.run(user_q)
+
+                # Save to history
+                st.session_state.chat_history.append(("You", user_q))
+                st.session_state.chat_history.append(("Bot", response))
+
+            # Show full history with chat bubble style
+            for role, msg in st.session_state.chat_history[::-1]:  # newest first
+                bg_color = "#f1f1f1" if role == "You" else "#d1f5d3"
+                icon = "🧍" if role == "You" else "🤖"
+                st.markdown(f"""
+                <div style="background-color:{bg_color};padding:10px;
+                border-radius:10px;margin-bottom:5px">
+                <b>{icon} {role}:</b> {msg}
+                </div>
+                """, unsafe_allow_html=True)
+
 else:
     st.info("👉 Please select both teams and exactly 3 players for each before running predictions.")
 
