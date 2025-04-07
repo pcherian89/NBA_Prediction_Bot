@@ -385,7 +385,7 @@ class GamePredictionAgent:
             "away_final_probability": round(away / total, 2)
         }
 
-        # ✅ Step 1: Check if input is valid
+        # ✅ Validate input
         inputs_valid = (
             home_team != "Select a team"
             and away_team != "Select a team"
@@ -393,17 +393,19 @@ class GamePredictionAgent:
             and len(away_players) == 3
         )
         
-        # ✅ Step 2: Show Run Prediction button
+        # ✅ Run Prediction
         if inputs_valid:
             if st.button("🔮 Run Prediction"):
                 st.session_state.prediction_ran = True
+        
                 agent = GamePredictionAgent()
                 result = agent.predict_game(home_team, away_team, home_players, away_players)
+        
                 st.session_state.prediction_result = result
                 st.session_state.agent = agent
         
-        # ✅ Step 3: Show results after prediction has run
-        if st.session_state.get("prediction_ran", False):
+        # ✅ Display results if prediction has run
+        if st.session_state.prediction_ran:
             result = st.session_state.prediction_result
             agent = st.session_state.agent
         
@@ -411,8 +413,8 @@ class GamePredictionAgent:
             st.markdown("### 🎯 Final Win Probabilities")
             st.markdown(f"<h3 style='text-align: center;'>{result['home_team']} (Home): <span style='color:{HOME_COLOR}'>{result['home_final_probability']:.2f}</span> &nbsp;&nbsp;|&nbsp;&nbsp; {result['away_team']} (Away): <span style='color:{AWAY_COLOR}'>{result['away_final_probability']:.2f}</span></h3>", unsafe_allow_html=True)
         
-        # ✅ Step 4: If input not valid AND prediction hasn't been run, show warning
-        if not inputs_valid and not st.session_state.get("prediction_ran", False):
+        # ✅ Only show warning if inputs invalid AND prediction not yet run
+        if not inputs_valid and not st.session_state.prediction_ran:
             st.info("👉 Please select both teams and exactly 3 players for each before running predictions.")
 
         # 🎲 Convert Win % to Odds
