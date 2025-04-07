@@ -478,20 +478,30 @@ with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=False):
         from langchain_openai import OpenAI
 
         # Prepare context DataFrames
-        dfs = {
-            "home_player_stats": agent.last_home_player_stats,
-            "away_player_stats": agent.last_away_player_stats,
-            "home_team_df": agent.last_home_team_df,
-            "away_team_df": agent.last_away_team_df
-        }
+       # Add source labels to each df
+        df_home_players = agent.last_home_player_stats.copy()
+        df_home_players["source"] = "home_player_stats"
+        
+        df_away_players = agent.last_away_player_stats.copy()
+        df_away_players["source"] = "away_player_stats"
+        
+        df_home_team = agent.last_home_team_df.copy()
+        df_home_team["source"] = "home_team_df"
+        
+        df_away_team = agent.last_away_team_df.copy()
+        df_away_team["source"] = "away_team_df"
+        
+        # Combine into one big dataframe
+        combined_df = pd.concat([df_home_players, df_away_players, df_home_team, df_away_team], ignore_index=True)
 
         # Create Langchain agent
         chatbot = create_pandas_dataframe_agent(
             llm=OpenAI(temperature=0),
-            df=dfs,
+            df=combined_df,
             verbose=False,
             allow_dangerous_code=True
         )
+
 
         # Get answer
         response = chatbot.run(st.session_state.chat_input)
