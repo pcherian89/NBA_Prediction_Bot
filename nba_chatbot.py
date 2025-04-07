@@ -371,11 +371,9 @@ class GamePredictionAgent:
         home_team_prob = self.predict_team_win_probability(home_team, store_attr="last_home_team_df")
         away_team_prob = self.predict_team_win_probability(away_team, store_attr="last_away_team_df")
 
-        # home = round(0.8 * home_player_prob["team_average_win_probability"] + 0.2 * home_team_prob["average_team_win_probability"], 4)
-        # away = round(0.8 * away_player_prob["team_average_win_probability"] + 0.2 * away_team_prob["average_team_win_probability"], 4)
+        home = round(0.1 * home_player_prob["team_average_win_probability"] + 0.9 * home_team_prob["average_team_win_probability"], 4)
+        away = round(0.1 * away_player_prob["team_average_win_probability"] + 0.9 * away_team_prob["average_team_win_probability"], 4)
 
-        home = home_team_prob["average_team_win_probability"], 4)
-        away = away_team_prob["average_team_win_probability"], 4)
         total = home + away
         return {
             "home_team": home_team,
