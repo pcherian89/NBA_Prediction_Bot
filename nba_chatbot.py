@@ -384,29 +384,25 @@ class GamePredictionAgent:
             "home_final_probability": round(home / total, 2),
             "away_final_probability": round(away / total, 2)
         }
-    
-        # ✅ Run Prediction
+
+        # ✅ Step 1: Check if input is valid
+        inputs_valid = (
+            home_team != "Select a team"
+            and away_team != "Select a team"
+            and len(home_players) == 3
+            and len(away_players) == 3
+        )
         
-        if "prediction_ran" not in st.session_state:
-            st.session_state.prediction_ran = False
-        
-        # ✅ Run Prediction — only when button is clicked
-        if (
-            home_team != "Select a team" and away_team != "Select a team" and
-            len(home_players) == 3 and len(away_players) == 3
-        ):
+        # ✅ Step 2: Show Run Prediction button
+        if inputs_valid:
             if st.button("🔮 Run Prediction"):
                 st.session_state.prediction_ran = True
-        
                 agent = GamePredictionAgent()
                 result = agent.predict_game(home_team, away_team, home_players, away_players)
-        
                 st.session_state.prediction_result = result
                 st.session_state.agent = agent
-        else:
-            st.info("👉 Please select both teams and exactly 3 players for each before running predictions.")
         
-        # ✅ Display prediction results — after the button has been clicked
+        # ✅ Step 3: Show results after prediction has run
         if st.session_state.get("prediction_ran", False):
             result = st.session_state.prediction_result
             agent = st.session_state.agent
@@ -414,6 +410,10 @@ class GamePredictionAgent:
             st.success("✅ Prediction complete!")
             st.markdown("### 🎯 Final Win Probabilities")
             st.markdown(f"<h3 style='text-align: center;'>{result['home_team']} (Home): <span style='color:{HOME_COLOR}'>{result['home_final_probability']:.2f}</span> &nbsp;&nbsp;|&nbsp;&nbsp; {result['away_team']} (Away): <span style='color:{AWAY_COLOR}'>{result['away_final_probability']:.2f}</span></h3>", unsafe_allow_html=True)
+        
+        # ✅ Step 4: If input not valid AND prediction hasn't been run, show warning
+        if not inputs_valid and not st.session_state.get("prediction_ran", False):
+            st.info("👉 Please select both teams and exactly 3 players for each before running predictions.")
 
         # 🎲 Convert Win % to Odds
         def win_prob_to_decimal_odds(prob):
