@@ -14,11 +14,10 @@ from datetime import datetime
 import pytz
 from sqlalchemy import text
 from langchain_experimental.agents import create_pandas_dataframe_agent
-from langchain_openai import ChatOpenAI
 import os
+from langchain.agents.agent_toolkits.pandas.base import create_pandas_dataframe_agent
+from langchain_openai import ChatOpenAI
 os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
-llm=ChatOpenAI(temperature=0),
-
 
 TEAM_NAME_MAPPING = {
     "Golden State Warriors": "Warriors",
@@ -505,11 +504,34 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
     
             combined_df = pd.concat([df_home, df_away, df_team_home, df_team_away], ignore_index=True)
     
+            # ✅ Custom system prompt to guide the chatbot
+            custom_prompt = """
+            You are an expert NBA analyst working for a high-stakes sports analytics firm.
+            Your job is to analyze tabular data comparing two NBA teams and their top players.
+            Always explain what the numbers mean in real basketball context — not just averages.
+            
+            Use basketball terminology. Think like a coach or data scientist.
+            If the home team has higher eFG%, explain that it means they're shooting more efficiently.
+            If a player has more turnovers, discuss how that impacts game flow.
+            Make your answers sharp, clear, and insightful — like you're preparing a game breakdown for ESPN or a betting firm.
+            
+            NEVER give generic pandas code explanations. Only provide human-like, data-driven basketball insight.
+            """
+            
+            # 🧠 Use ChatOpenAI (better for instructions)
+            llm = ChatOpenAI(
+                temperature=0,
+                model="gpt-4",  # Or use "gpt-3.5-turbo" if on free tier
+            )
+            
+            # 🔁 Build LangChain chatbot with that custom prompt
             chatbot = create_pandas_dataframe_agent(
-                llm=ChatOpenAI(temperature=0),
+                llm=llm,
                 df=combined_df,
                 verbose=False,
-                allow_dangerous_code=True
+                prefix=custom_prompt,
+                agent_type="openai-functions",  # this uses the chat-based reasoning path
+                allow_dangerous_code=False
             )
                 
             response = chatbot.run(st.session_state.chat_input)
