@@ -517,19 +517,30 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
             NEVER give generic pandas code explanations. Only provide human-like, data-driven basketball insight.
             """
             
-            # 🧠 Use ChatOpenAI (better for instructions)
-            
+            # 🧠 Use ChatOpenAI with custom prompt manually injected
+
             llm = ChatOpenAI(
                 temperature=0,
-                model="gpt-4",  # or "gpt-3.5-turbo"
+                model="gpt-4"
             )
             
             chatbot = create_pandas_dataframe_agent(
                 llm=llm,
                 df=combined_df,
                 verbose=False,
-                handle_parsing_errors=True  # helps avoid crashing on vague queries
+                handle_parsing_errors=True
             )
+            
+            # ⛳️ Inject custom prompt directly into the user input
+            user_question = st.session_state.chat_input.strip()
+            if user_question:
+                full_prompt = custom_prompt + "\n\nUser Question: " + user_question
+                response = chatbot.run(full_prompt)
+            
+                st.session_state.chat_history.append(("You", user_question))
+                st.session_state.chat_history.append(("Bot", response))
+                st.session_state.chat_input = ""
+
                 
             response = chatbot.run(st.session_state.chat_input)
             st.session_state.chat_history.append(("You", st.session_state.chat_input))
