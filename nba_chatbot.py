@@ -15,6 +15,8 @@ import pytz
 from sqlalchemy import text
 from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain_openai import OpenAI
+import os
+os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
 
 TEAM_NAME_MAPPING = {
