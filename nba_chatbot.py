@@ -281,7 +281,7 @@ class GamePredictionAgent:
 
         setattr(self, store_attr, player_stats)
 
-        st.markdown(f"#### 🔍 Win Probabilities for {team_name} Players")
+        st.markdown(f"#### 🔍 Player Stats for {team_name} ")
         st.dataframe(player_stats[["firstname", "lastname", "win_probability"] + model_features])
         return {"team_average_win_probability": round(player_stats["win_probability"].mean(), 4)}
 
