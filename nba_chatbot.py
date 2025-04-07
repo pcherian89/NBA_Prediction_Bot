@@ -392,6 +392,11 @@ if (
         agent = GamePredictionAgent()
         result = agent.predict_game(home_team, away_team, home_players, away_players)
 
+        
+        # 🧠 Store for chatbot context
+        st.session_state.agent = agent
+        st.session_state.prediction_result = result
+        
         st.success("✅ Prediction complete!")
         st.markdown("### 🎯 Final Win Probabilities")
         st.markdown(f"<h3 style='text-align: center;'>{result['home_team']} (Home): <span style='color:{HOME_COLOR}'>{result['home_final_probability']:.2f}</span> &nbsp;&nbsp;|&nbsp;&nbsp; {result['away_team']} (Away): <span style='color:{AWAY_COLOR}'>{result['away_final_probability']:.2f}</span></h3>", unsafe_allow_html=True)
@@ -464,9 +469,13 @@ with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=False):
         key="chat_input_field"
     )
 
-    # Step 3: Run bot only after prediction
+    # Step 3: Run bot only if prediction exists and question asked
     if st.session_state.chat_input and "agent" in st.session_state:
-        agent = st.session_state.agent  # grab from stored session
+        agent = st.session_state.agent
+        from langchain_experimental.agents import create_pandas_dataframe_agent
+        from langchain_openai import OpenAI
+
+        # Prepare context DataFrames
         dfs = {
             "home_player_stats": agent.last_home_player_stats,
             "away_player_stats": agent.last_away_player_stats,
@@ -474,9 +483,7 @@ with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=False):
             "away_team_df": agent.last_away_team_df
         }
 
-        from langchain_experimental.agents import create_pandas_dataframe_agent
-        from langchain_openai import OpenAI
-
+        # Create Langchain agent
         chatbot = create_pandas_dataframe_agent(
             llm=OpenAI(temperature=0),
             df=dfs,
@@ -484,13 +491,15 @@ with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=False):
             allow_dangerous_code=True
         )
 
-        # Run response
+        # Get answer
         response = chatbot.run(st.session_state.chat_input)
+
+        # Save and show chat
         st.session_state.chat_history.append(("You", st.session_state.chat_input))
         st.session_state.chat_history.append(("Bot", response))
         st.session_state.chat_input = ""
 
-    # Step 4: Show history with chat UI
+    # Step 4: Show chat history
     for role, msg in st.session_state.chat_history[::-1]:
         bg_color = "#f1f1f1" if role == "You" else "#d1f5d3"
         icon = "🧍" if role == "You" else "🤖"
