@@ -448,5 +448,59 @@ if (
 else:
     st.info("👉 Please select both teams and exactly 3 players for each before running predictions.")
 
+st.markdown("---")
+with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=False):
+
+    # Step 1: Initialize chat memory
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+    if "chat_input" not in st.session_state:
+        st.session_state.chat_input = ""
+
+    # Step 2: Input box
+    st.session_state.chat_input = st.text_input(
+        "🧠 Type your question:",
+        value=st.session_state.chat_input,
+        key="chat_input_field"
+    )
+
+    # Step 3: Run bot only after prediction
+    if st.session_state.chat_input and "agent" in st.session_state:
+        agent = st.session_state.agent  # grab from stored session
+        dfs = {
+            "home_player_stats": agent.last_home_player_stats,
+            "away_player_stats": agent.last_away_player_stats,
+            "home_team_df": agent.last_home_team_df,
+            "away_team_df": agent.last_away_team_df
+        }
+
+        from langchain_experimental.agents import create_pandas_dataframe_agent
+        from langchain_openai import OpenAI
+
+        chatbot = create_pandas_dataframe_agent(
+            llm=OpenAI(temperature=0),
+            df=dfs,
+            verbose=False,
+            allow_dangerous_code=True
+        )
+
+        # Run response
+        response = chatbot.run(st.session_state.chat_input)
+        st.session_state.chat_history.append(("You", st.session_state.chat_input))
+        st.session_state.chat_history.append(("Bot", response))
+        st.session_state.chat_input = ""
+
+    # Step 4: Show history with chat UI
+    for role, msg in st.session_state.chat_history[::-1]:
+        bg_color = "#f1f1f1" if role == "You" else "#d1f5d3"
+        icon = "🧍" if role == "You" else "🤖"
+        st.markdown(f"""
+        <div style="background-color:{bg_color};padding:10px;
+        border-radius:10px;margin-bottom:5px">
+        <b>{icon} {role}:</b> {msg}
+        </div>
+        """, unsafe_allow_html=True)
+
+
 
 
