@@ -17,7 +17,7 @@ from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain_openai import OpenAI
 import os
 os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
-
+llm = OpenAI(temperature=0)
 
 TEAM_NAME_MAPPING = {
     "Golden State Warriors": "Warriors",
