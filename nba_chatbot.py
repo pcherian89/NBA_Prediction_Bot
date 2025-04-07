@@ -518,19 +518,17 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
             """
             
             # 🧠 Use ChatOpenAI (better for instructions)
+            
             llm = ChatOpenAI(
                 temperature=0,
-                model="gpt-4",  # Or use "gpt-3.5-turbo" if on free tier
+                model="gpt-4",  # or "gpt-3.5-turbo"
             )
             
-            # 🔁 Build LangChain chatbot with that custom prompt
             chatbot = create_pandas_dataframe_agent(
                 llm=llm,
                 df=combined_df,
                 verbose=False,
-                prefix=custom_prompt,
-                agent_type="openai-functions",  # this uses the chat-based reasoning path
-                allow_dangerous_code=False
+                handle_parsing_errors=True  # helps avoid crashing on vague queries
             )
                 
             response = chatbot.run(st.session_state.chat_input)
