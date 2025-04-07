@@ -447,43 +447,53 @@ if (
 
         st.markdown("---")
         with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=False):
-
-            # Session state to store chat history
+        
+            # 🗂️ Step 1: Initialize session variables
             if "chat_history" not in st.session_state:
                 st.session_state.chat_history = []
-
-            # Chat input
-            user_q = st.text_input("🗨️ Type your question:")
-
-            if user_q:
+            if "chat_input" not in st.session_state:
+                st.session_state.chat_input = ""
+        
+            # 💬 Step 2: Persistent text input field
+            st.session_state.chat_input = st.text_input(
+                "🗨️ Type your question:",
+                value=st.session_state.chat_input,
+                key="chat_input_field"
+            )
+        
+            # 🤖 Step 3: Run Langchain chatbot if user entered a question
+            if st.session_state.chat_input:
                 from langchain_experimental.agents import create_pandas_dataframe_agent
                 from langchain_openai import OpenAI
-
-                # Build a single DataFrame context (you can combine if needed)
+        
+                # 👇 Combine all your game context DataFrames
                 dfs = {
                     "home_player_stats": agent.last_home_player_stats,
                     "away_player_stats": agent.last_away_player_stats,
                     "home_team_df": agent.last_home_team_df,
                     "away_team_df": agent.last_away_team_df
                 }
-
-                # Create the Langchain chatbot agent
+        
+                # 🔌 Create the Langchain Pandas agent
                 chatbot = create_pandas_dataframe_agent(
                     llm=OpenAI(temperature=0),
                     df=dfs,
                     verbose=False,
                     allow_dangerous_code=True
                 )
-
-                # Get response
-                response = chatbot.run(user_q)
-
-                # Save to history
-                st.session_state.chat_history.append(("You", user_q))
+        
+                # 🧠 Get the response from the AI
+                response = chatbot.run(st.session_state.chat_input)
+        
+                # 💾 Save chat history
+                st.session_state.chat_history.append(("You", st.session_state.chat_input))
                 st.session_state.chat_history.append(("Bot", response))
-
-            # Show full history with chat bubble style
-            for role, msg in st.session_state.chat_history[::-1]:  # newest first
+        
+                # 🧹 Clear input field after processing
+                st.session_state.chat_input = ""
+        
+            # 📜 Step 4: Display chat history with chat bubble UI
+            for role, msg in st.session_state.chat_history[::-1]:  # reverse order
                 bg_color = "#f1f1f1" if role == "You" else "#d1f5d3"
                 icon = "🧍" if role == "You" else "🤖"
                 st.markdown(f"""
@@ -492,6 +502,7 @@ if (
                 <b>{icon} {role}:</b> {msg}
                 </div>
                 """, unsafe_allow_html=True)
+        
 
 else:
     st.info("👉 Please select both teams and exactly 3 players for each before running predictions.")
