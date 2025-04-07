@@ -521,7 +521,6 @@ class GamePredictionAgent:
                 <b>{icon} {role}:</b> {msg}
                 </div>
                 """, unsafe_allow_html=True)
-        
         else:
             st.info("👉 Please select both teams and exactly 3 players for each before running predictions.")
 
