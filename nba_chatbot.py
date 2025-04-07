@@ -403,7 +403,8 @@ class GamePredictionAgent:
         
                 st.session_state.prediction_result = result
                 st.session_state.agent = agent
-        
+        else:
+            st.info("👉 Please select both teams and exactly 3 players for each before running predictions.")
         
         # ✅ Display prediction results — after the button has been clicked
         if st.session_state.get("prediction_ran", False):
@@ -521,8 +522,7 @@ class GamePredictionAgent:
                 <b>{icon} {role}:</b> {msg}
                 </div>
                 """, unsafe_allow_html=True)
-        else:
-            st.info("👉 Please select both teams and exactly 3 players for each before running predictions.")
+        
 
 
 
