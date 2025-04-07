@@ -402,24 +402,79 @@ if (
         st.markdown("### 🎯 Final Win Probabilities")
         st.markdown(f"<h3 style='text-align: center;'>{result['home_team']} (Home): <span style='color:{HOME_COLOR}'>{result['home_final_probability']:.2f}</span> &nbsp;&nbsp;|&nbsp;&nbsp; {result['away_team']} (Away): <span style='color:{AWAY_COLOR}'>{result['away_final_probability']:.2f}</span></h3>", unsafe_allow_html=True)
 
-# ✅ Insert LangChain Chatbot Here
+# ✅ Display visuals and insights if prediction exists
 if "prediction_result" in st.session_state and "agent" in st.session_state:
+    result = st.session_state.prediction_result
+    agent = st.session_state.agent
+
+    # 🎲 Convert Win % to Odds
+    def win_prob_to_decimal_odds(prob):
+        return round(1 / prob, 2)
+
+    def win_prob_to_american_odds(prob):
+        if prob >= 0.5:
+            return f"-{round(prob / (1 - prob) * 100):.0f}"
+        else:
+            return f"+{round((1 - prob) / prob * 100):.0f}"
+
+    home_decimal = win_prob_to_decimal_odds(result["home_final_probability"])
+    away_decimal = win_prob_to_decimal_odds(result["away_final_probability"])
+    home_american = win_prob_to_american_odds(result["home_final_probability"])
+    away_american = win_prob_to_american_odds(result["away_final_probability"])
+
+    # 💰 Odds Breakdown
+    st.markdown("### 💰 Odds Breakdown")
+    odds_cols = st.columns([3, 1.5, 2, 2])
+    header_style = "font-weight: 600; font-size: 15px"
+    odds_cols[0].markdown(f"<div style='{header_style}'>Team</div>", unsafe_allow_html=True)
+    odds_cols[1].markdown(f"<div style='{header_style}'>Win %</div>", unsafe_allow_html=True)
+    odds_cols[2].markdown(f"<div style='{header_style}'>Decimal Odds</div>", unsafe_allow_html=True)
+    odds_cols[3].markdown(f"<div style='{header_style}'>Odds</div>", unsafe_allow_html=True)
+
+    # Row 1 – Home
+    odds_cols = st.columns([3, 1.5, 2, 2])
+    odds_cols[0].markdown(f"**{result['home_team']} (Home)**")
+    odds_cols[1].markdown(f"{result['home_final_probability']:.0%}")
+    odds_cols[2].markdown(f"{home_decimal:.2f}")
+    odds_cols[3].markdown(f"{home_american}")
+
+    # Row 2 – Away
+    odds_cols = st.columns([3, 1.5, 2, 2])
+    odds_cols[0].markdown(f"**{result['away_team']} (Away)**")
+    odds_cols[1].markdown(f"{result['away_final_probability']:.0%}")
+    odds_cols[2].markdown(f"{away_decimal:.2f}")
+    odds_cols[3].markdown(f"{away_american}")
+
+    # 📈 Charts and Trends
+    with st.expander("📈 Team Metric Trends Over Last 10 Games"):
+        agent.plot_team_metric_trends(home_team, away_team)
+
+    with st.expander("📊 View Player Feature Comparison Charts"):
+        agent.plot_player_win_probs()
+        agent.plot_player_feature_comparisons()
+
+    st.markdown("---")
+    st.markdown("📊 Run again above to test another matchup!")
+
+    # ✅ Insert LangChain Chatbot (AFTER all visuals)
     st.markdown("---")
     with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=False):
 
+        # Step 1: Initialize chat memory
         if "chat_history" not in st.session_state:
             st.session_state.chat_history = []
         if "chat_input" not in st.session_state:
             st.session_state.chat_input = ""
 
+        # Step 2: Input box
         st.session_state.chat_input = st.text_input(
             "🧠 Type your question:",
             value=st.session_state.chat_input,
             key="chat_input_field"
         )
 
+        # Step 3: Run chatbot only if input given
         if st.session_state.chat_input:
-            agent = st.session_state.agent
             from langchain_experimental.agents import create_pandas_dataframe_agent
             from langchain_openai import OpenAI
 
@@ -450,69 +505,19 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
             st.session_state.chat_history.append(("Bot", response))
             st.session_state.chat_input = ""
 
+        # Step 4: Display chat
         for role, msg in st.session_state.chat_history[::-1]:
             bg_color = "#f1f1f1" if role == "You" else "#d1f5d3"
             icon = "🧍" if role == "You" else "🤖"
             st.markdown(f"""
-            <div style="background-color:{bg_color};padding:10px;
-            border-radius:10px;margin-bottom:5px">
-            <b>{icon} {role}:</b> {msg}
-            </div>
+                <div style="background-color:{bg_color};padding:10px;
+                border-radius:10px;margin-bottom:5px">
+                <b>{icon} {role}:</b> {msg}
+                </div>
             """, unsafe_allow_html=True)
 
-# 📊 Continue with Odds Breakdown and Charts here...
-
-        # 🎲 Convert Win % to Odds
-        def win_prob_to_decimal_odds(prob):
-            return round(1 / prob, 2)
-
-        def win_prob_to_american_odds(prob):
-            if prob >= 0.5:
-                return f"-{round(prob / (1 - prob) * 100):.0f}"
-            else:
-                return f"+{round((1 - prob) / prob * 100):.0f}"
-
-        home_decimal = win_prob_to_decimal_odds(result["home_final_probability"])
-        away_decimal = win_prob_to_decimal_odds(result["away_final_probability"])
-        home_american = win_prob_to_american_odds(result["home_final_probability"])
-        away_american = win_prob_to_american_odds(result["away_final_probability"])
-
-        st.markdown("### 💰 Odds Breakdown")
-
-        odds_cols = st.columns([3, 1.5, 2, 2])
-        header_style = "font-weight: 600; font-size: 15px"
-
-        # Header
-        odds_cols[0].markdown(f"<div style='{header_style}'>Team</div>", unsafe_allow_html=True)
-        odds_cols[1].markdown(f"<div style='{header_style}'>Win %</div>", unsafe_allow_html=True)
-        odds_cols[2].markdown(f"<div style='{header_style}'>Decimal Odds</div>", unsafe_allow_html=True)
-        odds_cols[3].markdown(f"<div style='{header_style}'>Odds</div>", unsafe_allow_html=True)
-
-        # Row 1 – Home
-        odds_cols = st.columns([3, 1.5, 2, 2])
-        odds_cols[0].markdown(f"**{result['home_team']} (Home)**")
-        odds_cols[1].markdown(f"{result['home_final_probability']:.0%}")
-        odds_cols[2].markdown(f"{home_decimal:.2f}")
-        odds_cols[3].markdown(f"{home_american}")
-
-        # Row 2 – Away
-        odds_cols = st.columns([3, 1.5, 2, 2])
-        odds_cols[0].markdown(f"**{result['away_team']} (Away)**")
-        odds_cols[1].markdown(f"{result['away_final_probability']:.0%}")
-        odds_cols[2].markdown(f"{away_decimal:.2f}")
-        odds_cols[3].markdown(f"{away_american}")
-
-        with st.expander("📈 Team Metric Trends Over Last 10 Games"):
-            agent.plot_team_metric_trends(home_team, away_team)
-
-        with st.expander("📊 View Player Feature Comparison Charts"):
-            agent.plot_player_win_probs()
-            agent.plot_player_feature_comparisons()
-
-        st.markdown("---")
-        st.markdown("📊 Run again above to test another matchup!")
+# 👇 Input validation fallback
 else:
     st.info("👉 Please select both teams and exactly 3 players for each before running predictions.")
-
 
 
