@@ -394,14 +394,73 @@ if (
         agent = GamePredictionAgent()
         result = agent.predict_game(home_team, away_team, home_players, away_players)
 
-        
         # 🧠 Store for chatbot context
         st.session_state.agent = agent
         st.session_state.prediction_result = result
-        
+
         st.success("✅ Prediction complete!")
         st.markdown("### 🎯 Final Win Probabilities")
         st.markdown(f"<h3 style='text-align: center;'>{result['home_team']} (Home): <span style='color:{HOME_COLOR}'>{result['home_final_probability']:.2f}</span> &nbsp;&nbsp;|&nbsp;&nbsp; {result['away_team']} (Away): <span style='color:{AWAY_COLOR}'>{result['away_final_probability']:.2f}</span></h3>", unsafe_allow_html=True)
+
+# ✅ Insert LangChain Chatbot Here
+if "prediction_result" in st.session_state and "agent" in st.session_state:
+    st.markdown("---")
+    with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=False):
+
+        if "chat_history" not in st.session_state:
+            st.session_state.chat_history = []
+        if "chat_input" not in st.session_state:
+            st.session_state.chat_input = ""
+
+        st.session_state.chat_input = st.text_input(
+            "🧠 Type your question:",
+            value=st.session_state.chat_input,
+            key="chat_input_field"
+        )
+
+        if st.session_state.chat_input:
+            agent = st.session_state.agent
+            from langchain_experimental.agents import create_pandas_dataframe_agent
+            from langchain_openai import OpenAI
+
+            df_home_players = agent.last_home_player_stats.copy()
+            df_home_players["source"] = "home_player_stats"
+            df_away_players = agent.last_away_player_stats.copy()
+            df_away_players["source"] = "away_player_stats"
+            df_home_team = agent.last_home_team_df.copy()
+            df_home_team["source"] = "home_team_df"
+            df_away_team = agent.last_away_team_df.copy()
+            df_away_team["source"] = "away_team_df"
+
+            combined_df = pd.concat(
+                [df_home_players, df_away_players, df_home_team, df_away_team],
+                ignore_index=True
+            )
+
+            chatbot = create_pandas_dataframe_agent(
+                llm=OpenAI(temperature=0),
+                df=combined_df,
+                verbose=False,
+                allow_dangerous_code=True
+            )
+
+            response = chatbot.run(st.session_state.chat_input)
+
+            st.session_state.chat_history.append(("You", st.session_state.chat_input))
+            st.session_state.chat_history.append(("Bot", response))
+            st.session_state.chat_input = ""
+
+        for role, msg in st.session_state.chat_history[::-1]:
+            bg_color = "#f1f1f1" if role == "You" else "#d1f5d3"
+            icon = "🧍" if role == "You" else "🤖"
+            st.markdown(f"""
+            <div style="background-color:{bg_color};padding:10px;
+            border-radius:10px;margin-bottom:5px">
+            <b>{icon} {role}:</b> {msg}
+            </div>
+            """, unsafe_allow_html=True)
+
+# 📊 Continue with Odds Breakdown and Charts here...
 
         # 🎲 Convert Win % to Odds
         def win_prob_to_decimal_odds(prob):
@@ -454,74 +513,6 @@ if (
         st.markdown("📊 Run again above to test another matchup!")
 else:
     st.info("👉 Please select both teams and exactly 3 players for each before running predictions.")
-
-st.markdown("---")
-with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=False):
-
-    # Step 1: Initialize chat memory
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-    if "chat_input" not in st.session_state:
-        st.session_state.chat_input = ""
-
-    # Step 2: Input box
-    st.session_state.chat_input = st.text_input(
-        "🧠 Type your question:",
-        value=st.session_state.chat_input,
-        key="chat_input_field"
-    )
-
-    # Step 3: Run bot only if prediction exists and question asked
-    if st.session_state.chat_input and "agent" in st.session_state:
-        agent = st.session_state.agent
-        from langchain_experimental.agents import create_pandas_dataframe_agent
-        from langchain_openai import OpenAI
-
-        # Prepare context DataFrames
-       # Add source labels to each df
-        df_home_players = agent.last_home_player_stats.copy()
-        df_home_players["source"] = "home_player_stats"
-        
-        df_away_players = agent.last_away_player_stats.copy()
-        df_away_players["source"] = "away_player_stats"
-        
-        df_home_team = agent.last_home_team_df.copy()
-        df_home_team["source"] = "home_team_df"
-        
-        df_away_team = agent.last_away_team_df.copy()
-        df_away_team["source"] = "away_team_df"
-        
-        # Combine into one big dataframe
-        combined_df = pd.concat([df_home_players, df_away_players, df_home_team, df_away_team], ignore_index=True)
-
-        # Create Langchain agent
-        chatbot = create_pandas_dataframe_agent(
-            llm=OpenAI(temperature=0),
-            df=combined_df,
-            verbose=False,
-            allow_dangerous_code=True
-        )
-
-
-        # Get answer
-        response = chatbot.run(st.session_state.chat_input)
-
-        # Save and show chat
-        st.session_state.chat_history.append(("You", st.session_state.chat_input))
-        st.session_state.chat_history.append(("Bot", response))
-        st.session_state.chat_input = ""
-
-    # Step 4: Show chat history
-    for role, msg in st.session_state.chat_history[::-1]:
-        bg_color = "#f1f1f1" if role == "You" else "#d1f5d3"
-        icon = "🧍" if role == "You" else "🤖"
-        st.markdown(f"""
-        <div style="background-color:{bg_color};padding:10px;
-        border-radius:10px;margin-bottom:5px">
-        <b>{icon} {role}:</b> {msg}
-        </div>
-        """, unsafe_allow_html=True)
-
 
 
 
