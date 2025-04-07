@@ -380,6 +380,20 @@ class GamePredictionAgent:
             "home_final_probability": round(home / total, 2),
             "away_final_probability": round(away / total, 2)
         }
+    # 🎲 Convert Win % to Odds
+    def win_prob_to_decimal_odds(prob):
+        return round(1 / prob, 2)
+
+    def win_prob_to_american_odds(prob):
+        if prob >= 0.5:
+            return f"-{round(prob / (1 - prob) * 100):.0f}"
+        else:
+            return f"+{round((1 - prob) / prob * 100):.0f}"
+
+    home_decimal = win_prob_to_decimal_odds(result["home_final_probability"])
+    away_decimal = win_prob_to_decimal_odds(result["away_final_probability"])
+    home_american = win_prob_to_american_odds(result["home_final_probability"])
+    away_american = win_prob_to_american_odds(result["away_final_probability"])
 
 # ✅ Run Prediction
 if (
