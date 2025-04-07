@@ -286,8 +286,8 @@ class GamePredictionAgent:
 
         setattr(self, store_attr, player_stats)
 
-        st.markdown(f"#### 🔍 Win Probabilities for {team_name} Players")
-        st.dataframe(player_stats[["firstname", "lastname", "win_probability"] + model_features])
+        # st.markdown(f"#### 🔍 Win Probabilities for {team_name} Players")
+        # st.dataframe(player_stats[["firstname", "lastname", "win_probability"] + model_features])
         return {"team_average_win_probability": round(player_stats["win_probability"].mean(), 4)}
 
     def get_team_data(self, team_name):
@@ -314,8 +314,8 @@ class GamePredictionAgent:
 
         setattr(self, store_attr, df)
 
-        st.markdown(f"#### 🔍 {team_name} - Last 10 Games")
-        st.dataframe(df[["gamedate", "win", "win_probability"] + feature_cols])
+        # st.markdown(f"#### 🔍 {team_name} - Last 10 Games")
+        # st.dataframe(df[["gamedate", "win", "win_probability"] + feature_cols])
 
         return {"average_team_win_probability": round(df["win_probability"].mean(), 4)}
 
