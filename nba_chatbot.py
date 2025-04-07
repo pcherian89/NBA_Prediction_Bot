@@ -414,7 +414,7 @@ if st.session_state.get("prediction_ran", False):
     st.markdown("### 🎯 Final Win Probabilities")
     st.markdown(f"<h3 style='text-align: center;'>{result['home_team']} (Home): <span style='color:{HOME_COLOR}'>{result['home_final_probability']:.2f}</span> &nbsp;&nbsp;|&nbsp;&nbsp; {result['away_team']} (Away): <span style='color:{AWAY_COLOR}'>{result['away_final_probability']:.2f}</span></h3>", unsafe_allow_html=True)
 
-         # 🎲 Convert Win % to Odds
+        # 🎲 Convert Win % to Odds
         def win_prob_to_decimal_odds(prob):
             return round(1 / prob, 2)
 
