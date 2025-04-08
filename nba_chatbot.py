@@ -405,28 +405,6 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
     agent = st.session_state.agent
     result = st.session_state.prediction_result
 
-    # 🧠 Filtered Team Stats (for chatbot and table display)
-    df_home_team = agent.last_home_team_df[[
-        "gamedate", "win", "win_probability",
-        "ast_to_ratio_home", "reb_percentage_home",
-        "efg_percentage_home", "free_throw_rate"
-    ]].copy()
-    
-    df_away_team = agent.last_away_team_df[[
-        "gamedate", "win", "win_probability",
-        "ast_to_ratio_home", "reb_percentage_home",
-        "efg_percentage_home", "free_throw_rate"
-    ]].copy()
-    
-    df_home_team["team"] = "Home"
-    df_away_team["team"] = "Away"
-    
-    # Combine for chatbot prompt
-    team_df = pd.concat([df_home_team, df_away_team], ignore_index=True)
-
-    # 📊 Prepare formatted table for GPT
-    team_stat_table = tabulate(team_df, headers="keys", tablefmt="github")
-
     # 📊 Tables always visible
     st.markdown("### 📊 Home Team - Player Stats")
     st.dataframe(agent.last_home_player_stats)
@@ -490,7 +468,8 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
         if user_input.strip():
             from tabulate import tabulate
             import openai
-
+    
+            # 🧠 Player stats
             df_home = agent.last_home_player_stats.copy()
             df_away = agent.last_away_player_stats.copy()
             df_home["player"] = df_home["firstname"] + " " + df_home["lastname"]
@@ -498,25 +477,35 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
             df_home["team"] = "Home"
             df_away["team"] = "Away"
             combined_df = pd.concat([df_home, df_away], ignore_index=True)
-
-            table = tabulate(combined_df[["player", "team", "points", "assists", "turnovers", "plusminuspoints"]], headers="keys", tablefmt="github")
+            stat_table = tabulate(combined_df[["player", "team", "points", "assists", "turnovers", "plusminuspoints"]], headers="keys", tablefmt="github")
+    
+            # 🧠 Team stats
+            df_home_team = agent.last_home_team_df[[
+                "gamedate", "win", "win_probability",
+                "ast_to_ratio_home", "reb_percentage_home",
+                "efg_percentage_home", "free_throw_rate"
+            ]].copy()
+            df_away_team = agent.last_away_team_df[[
+                "gamedate", "win", "win_probability",
+                "ast_to_ratio_home", "reb_percentage_home",
+                "efg_percentage_home", "free_throw_rate"
+            ]].copy()
+            df_home_team["team"] = "Home"
+            df_away_team["team"] = "Away"
+            team_df = pd.concat([df_home_team, df_away_team], ignore_index=True)
+            team_stat_table = tabulate(team_df, headers="keys", tablefmt="github")
+    
+            # 🧠 Prompt
             prompt = f"""
             You are an expert NBA analyst working for a high-stakes sports analytics firm.
-            Your job is to analyze matchups between two NBA teams using the stats below.
-            
-            Always explain what the numbers mean in real basketball context — not just averages.
-            Use basketball terminology. Think like a coach or scout.
-            If a team has higher eFG%, explain that it means they're shooting more efficiently.
-            If a player has more turnovers, explain how that affects their offensive flow.
-            
-            NEVER return any pandas or code output — just insights.
-            
+            Your job is to analyze the matchup using the following tables.
+    
             🏀 Team Stats (last 10 games):
             {team_stat_table}
-            
+    
             👤 Player Stats (last 20 games):
             {stat_table}
-            
+    
             User Question: {user_input}
             """
 
