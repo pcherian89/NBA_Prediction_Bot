@@ -490,18 +490,15 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
     
             df_home = agent.last_home_player_stats.copy()
             df_away = agent.last_away_player_stats.copy()
+            
             df_home["player_name"] = df_home["firstname"] + " " + df_home["lastname"]
             df_away["player_name"] = df_away["firstname"] + " " + df_away["lastname"]
-            df_home["source"] = "home_players"
-            df_away["source"] = "away_players"
-    
-            df_team_home = agent.last_home_team_df.copy()
-            df_team_away = agent.last_away_team_df.copy()
-            df_team_home["source"] = "home_team"
-            df_team_away["source"] = "away_team"
-    
-            combined_df = pd.concat([df_home, df_away, df_team_home, df_team_away], ignore_index=True)
-    
+            
+            df_home["team"] = "Home"
+            df_away["team"] = "Away"
+            
+            combined_df = pd.concat([df_home, df_away], ignore_index=True)
+
             # 1️⃣ Define your system prompt
             custom_prompt = """
             You are an expert NBA analyst working for a high-stakes sports analytics firm.
