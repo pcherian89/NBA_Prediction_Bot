@@ -406,20 +406,27 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
     result = st.session_state.prediction_result
 
     # 📊 Tables always visible
-    st.markdown("### 📊 Home Team - Player Stats")
-    st.dataframe(agent.last_home_player_stats)
-    st.markdown("### 📊 Away Team - Player Stats")
-    st.dataframe(agent.last_away_player_stats)
-    # ✅ Show filtered team stats (just the key features)
-    st.markdown("### 🧠 Home Team - Last 10 Games")
-    st.dataframe(agent.last_home_team_df[["gamedate", "win", "win_probability", 
-                                          "ast_to_ratio_home", "reb_percentage_home", 
-                                          "efg_percentage_home", "free_throw_rate"]])
     
-    st.markdown("### 🧠 Away Team - Last 10 Games")
-    st.dataframe(agent.last_away_team_df[["gamedate", "win", "win_probability", 
-                                          "ast_to_ratio_home", "reb_percentage_home", 
-                                          "efg_percentage_home", "free_throw_rate"]])
+    st.markdown(f"### 📊 {result['home_team']} - Player Stats")
+    st.dataframe(agent.last_home_player_stats)
+    
+    st.markdown(f"### 📊 {result['away_team']} - Player Stats")
+    st.dataframe(agent.last_away_player_stats)
+    
+    # ✅ Show filtered team stats (just the key features)
+    st.markdown(f"### 🧠 {result['home_team']} - Last 10 Games")
+    st.dataframe(agent.last_home_team_df[[
+        "gamedate", "win", "win_probability", 
+        "ast_to_ratio_home", "reb_percentage_home", 
+        "efg_percentage_home", "free_throw_rate"
+    ]])
+    
+    st.markdown(f"### 🧠 {result['away_team']} - Last 10 Games")
+    st.dataframe(agent.last_away_team_df[[
+        "gamedate", "win", "win_probability", 
+        "ast_to_ratio_home", "reb_percentage_home", 
+        "efg_percentage_home", "free_throw_rate"
+    ]])
 
     # 🎲 Convert Win % to Odds
     def win_prob_to_decimal_odds(prob): return round(1 / prob, 2)
