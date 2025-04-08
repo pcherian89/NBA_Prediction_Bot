@@ -399,7 +399,7 @@ if (
         st.session_state.agent = agent
         st.session_state.prediction_result = result
 
-        # ✅ Chatbot UI input
+        # ✅ Chatbot after prediction
         if "prediction_result" in st.session_state and "agent" in st.session_state:
         
             if "chat_history" not in st.session_state:
@@ -409,34 +409,11 @@ if (
                 st.session_state.chat_input = ""
         
             with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=True):
-                st.session_state.chat_input = st.text_input(
-                    "🧠 Type your question:",
-                    value=st.session_state.chat_input,
-                    key="chat_input_field"
-                )
+                user_input = st.text_input("🧠 Type your question:", key="chat_input_field")
         
-            # 🧠 Step 4: Run OpenAI with Custom Prompt
-            import openai
-            from tabulate import tabulate
-        
-            # Define custom system prompt
-            system_prompt = """
-            You are an expert NBA analyst working for a high-stakes sports analytics firm.
-            Your job is to analyze the matchup between two NBA teams and their key players.
-            Always explain what the numbers mean in basketball context — not just averages.
-        
-            Use basketball terminology. Think like a coach or scout.
-            If one team has higher eFG%, explain it’s due to better shooting.
-            If a player has more turnovers, explain how that affects game flow.
-        
-            NEVER give pandas code explanations.
-            Only provide human-like, data-driven basketball insights.
-            """
-        
-            user_question = st.session_state.chat_input.strip()
-        
-            if user_question:
-                # Get latest stats
+            if user_input.strip():
+                # 📊 Prepare DataFrame for GPT
+                from tabulate import tabulate
                 agent = st.session_state.agent
                 df_home = agent.last_home_player_stats.copy()
                 df_away = agent.last_away_player_stats.copy()
@@ -448,29 +425,38 @@ if (
                 combined_df = pd.concat([df_home, df_away], ignore_index=True)
                 stat_table = tabulate(combined_df[["player", "team", "points", "assists", "turnovers", "plusminuspoints"]], headers="keys", tablefmt="github")
         
-                # Inject data + question
-                full_prompt = f"{system_prompt}\n\nPlayer Stats Table:\n{stat_table}\n\nUser Question: {user_question}"
+                # 🎯 Custom prompt
+                prompt = f"""
+        You are an expert NBA analyst working for a high-stakes sports analytics firm.
+        Your job is to break down matchups using the stats below.
         
+        Player Stats Table:
+        {stat_table}
+        
+        User Question: {user_input}
+        """
+        
+                # 🤖 Get smart response from OpenAI
+                import openai
                 try:
                     response = openai.ChatCompletion.create(
-                        model="gpt-4",  # or "gpt-3.5-turbo"
+                        model="gpt-4",
                         temperature=0,
                         messages=[
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": full_prompt}
+                            {"role": "system", "content": "You are a helpful, smart NBA analyst."},
+                            {"role": "user", "content": prompt}
                         ]
                     )
                     answer = response.choices[0].message["content"]
-        
                 except Exception as e:
                     answer = f"⚠️ Error: {e}"
         
-                # Step 5: Save and display the chat
-                st.session_state.chat_history.append(("You", user_question))
+                # 💾 Save to chat history
+                st.session_state.chat_history.append(("You", user_input))
                 st.session_state.chat_history.append(("Bot", answer))
-                st.session_state.chat_input = ""
+                st.session_state.chat_input = ""  # Clear input
         
-            # 💬 Display Chat History
+            # 💬 Display chat history
             for role, msg in st.session_state.chat_history[::-1]:
                 bg = "#f1f1f1" if role == "You" else "#d1f5d3"
                 icon = "🧍" if role == "You" else "🤖"
