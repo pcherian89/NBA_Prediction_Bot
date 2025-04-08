@@ -396,126 +396,127 @@ if (
         st.success("✅ Prediction complete!")
         st.markdown("### 🎯 Final Win Probabilities")
         st.markdown(f"<h3 style='text-align: center;'>{result['home_team']} (Home): <span style='color:{HOME_COLOR}'>{result['home_final_probability']:.2f}</span> &nbsp;&nbsp;|&nbsp;&nbsp; {result['away_team']} (Away): <span style='color:{AWAY_COLOR}'>{result['away_final_probability']:.2f}</span></h3>", unsafe_allow_html=True)
+
+        # Save for later
         st.session_state.agent = agent
         st.session_state.prediction_result = result
+        st.session_state.chat_history = []
+        st.session_state.chat_input = ""
 
-        # ✅ Chatbot after prediction
-        if "prediction_result" in st.session_state and "agent" in st.session_state:
-        
-            if "chat_history" not in st.session_state:
-                st.session_state.chat_history = []
-        
-            if "chat_input" not in st.session_state:
-                st.session_state.chat_input = ""
-        
-            with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=True):
-                user_input = st.text_input("🧠 Type your question:", key="chat_input_field")
-        
-            if user_input.strip():
-                # 📊 Prepare DataFrame for GPT
-                from tabulate import tabulate
-                agent = st.session_state.agent
-                df_home = agent.last_home_player_stats.copy()
-                df_away = agent.last_away_player_stats.copy()
-                df_home["team"] = "Home"
-                df_away["team"] = "Away"
-                df_home["player"] = df_home["firstname"] + " " + df_home["lastname"]
-                df_away["player"] = df_away["firstname"] + " " + df_away["lastname"]
-        
-                combined_df = pd.concat([df_home, df_away], ignore_index=True)
-                stat_table = tabulate(combined_df[["player", "team", "points", "assists", "turnovers", "plusminuspoints"]], headers="keys", tablefmt="github")
-        
-                # 🎯 Custom prompt
-                prompt = f"""
-        You are an expert NBA analyst working for a high-stakes sports analytics firm.
-        Your job is to break down matchups using the stats below.
-        
-        Player Stats Table:
-        {stat_table}
-        
-        User Question: {user_input}
-        """
-        
-                # 🤖 Get smart response from OpenAI
-                import openai
-                try:
-                    response = openai.ChatCompletion.create(
-                        model="gpt-4",
-                        temperature=0,
-                        messages=[
-                            {"role": "system", "content": "You are a helpful, smart NBA analyst."},
-                            {"role": "user", "content": prompt}
-                        ]
-                    )
-                    answer = response.choices[0].message["content"]
-                except Exception as e:
-                    answer = f"⚠️ Error: {e}"
-        
-                # 💾 Save to chat history
-                st.session_state.chat_history.append(("You", user_input))
-                st.session_state.chat_history.append(("Bot", answer))
-                st.session_state.chat_input = ""  # Clear input
-        
-            # 💬 Display chat history
-            for role, msg in st.session_state.chat_history[::-1]:
-                bg = "#f1f1f1" if role == "You" else "#d1f5d3"
-                icon = "🧍" if role == "You" else "🤖"
-                st.markdown(f"""
-                <div style='background-color:{bg};padding:10px;border-radius:10px;margin-bottom:5px'>
-                <b>{icon} {role}:</b> {msg}
-                </div>
-                """, unsafe_allow_html=True)
+# ✅ Show chatbot UI after prediction
+if "prediction_result" in st.session_state and "agent" in st.session_state:
+    agent = st.session_state.agent
+    result = st.session_state.prediction_result
 
+    # 📊 Tables always visible
+    st.markdown("### 📊 Win Probabilities for Home Players")
+    st.dataframe(agent.last_home_player_stats)
+    st.markdown("### 📊 Win Probabilities for Away Players")
+    st.dataframe(agent.last_away_player_stats)
+    st.markdown("### 🧠 Home Team - Last 10 Games")
+    st.dataframe(agent.last_home_team_df)
+    st.markdown("### 🧠 Away Team - Last 10 Games")
+    st.dataframe(agent.last_away_team_df)
 
-        # 🎲 Convert Win % to Odds
-        def win_prob_to_decimal_odds(prob):
-            return round(1 / prob, 2)
+    # 🎲 Convert Win % to Odds
+    def win_prob_to_decimal_odds(prob): return round(1 / prob, 2)
+    def win_prob_to_american_odds(prob):
+        return f"-{round(prob / (1 - prob) * 100):.0f}" if prob >= 0.5 else f"+{round((1 - prob) / prob * 100):.0f}"
 
-        def win_prob_to_american_odds(prob):
-            if prob >= 0.5:
-                return f"-{round(prob / (1 - prob) * 100):.0f}"
-            else:
-                return f"+{round((1 - prob) / prob * 100):.0f}"
+    home_decimal = win_prob_to_decimal_odds(result["home_final_probability"])
+    away_decimal = win_prob_to_decimal_odds(result["away_final_probability"])
+    home_american = win_prob_to_american_odds(result["home_final_probability"])
+    away_american = win_prob_to_american_odds(result["away_final_probability"])
 
-        home_decimal = win_prob_to_decimal_odds(result["home_final_probability"])
-        away_decimal = win_prob_to_decimal_odds(result["away_final_probability"])
-        home_american = win_prob_to_american_odds(result["home_final_probability"])
-        away_american = win_prob_to_american_odds(result["away_final_probability"])
+    st.markdown("### 💰 Odds Breakdown")
+    odds_cols = st.columns([3, 1.5, 2, 2])
+    header_style = "font-weight: 600; font-size: 15px"
+    odds_cols[0].markdown(f"<div style='{header_style}'>Team</div>", unsafe_allow_html=True)
+    odds_cols[1].markdown(f"<div style='{header_style}'>Win %</div>", unsafe_allow_html=True)
+    odds_cols[2].markdown(f"<div style='{header_style}'>Decimal Odds</div>", unsafe_allow_html=True)
+    odds_cols[3].markdown(f"<div style='{header_style}'>Odds</div>", unsafe_allow_html=True)
 
-        st.markdown("### 💰 Odds Breakdown")
+    # Home row
+    odds_cols = st.columns([3, 1.5, 2, 2])
+    odds_cols[0].markdown(f"**{result['home_team']} (Home)**")
+    odds_cols[1].markdown(f"{result['home_final_probability']:.0%}")
+    odds_cols[2].markdown(f"{home_decimal:.2f}")
+    odds_cols[3].markdown(f"{home_american}")
 
-        odds_cols = st.columns([3, 1.5, 2, 2])
-        header_style = "font-weight: 600; font-size: 15px"
+    # Away row
+    odds_cols = st.columns([3, 1.5, 2, 2])
+    odds_cols[0].markdown(f"**{result['away_team']} (Away)**")
+    odds_cols[1].markdown(f"{result['away_final_probability']:.0%}")
+    odds_cols[2].markdown(f"{away_decimal:.2f}")
+    odds_cols[3].markdown(f"{away_american}")
 
-        # Header
-        odds_cols[0].markdown(f"<div style='{header_style}'>Team</div>", unsafe_allow_html=True)
-        odds_cols[1].markdown(f"<div style='{header_style}'>Win %</div>", unsafe_allow_html=True)
-        odds_cols[2].markdown(f"<div style='{header_style}'>Decimal Odds</div>", unsafe_allow_html=True)
-        odds_cols[3].markdown(f"<div style='{header_style}'>Odds</div>", unsafe_allow_html=True)
+    with st.expander("📈 Team Metric Trends Over Last 10 Games"):
+        agent.plot_team_metric_trends(result["home_team"], result["away_team"])
 
-        # Row 1 – Home
-        odds_cols = st.columns([3, 1.5, 2, 2])
-        odds_cols[0].markdown(f"**{result['home_team']} (Home)**")
-        odds_cols[1].markdown(f"{result['home_final_probability']:.0%}")
-        odds_cols[2].markdown(f"{home_decimal:.2f}")
-        odds_cols[3].markdown(f"{home_american}")
+    with st.expander("📊 View Player Feature Comparison Charts"):
+        agent.plot_player_win_probs()
+        agent.plot_player_feature_comparisons()
 
-        # Row 2 – Away
-        odds_cols = st.columns([3, 1.5, 2, 2])
-        odds_cols[0].markdown(f"**{result['away_team']} (Away)**")
-        odds_cols[1].markdown(f"{result['away_final_probability']:.0%}")
-        odds_cols[2].markdown(f"{away_decimal:.2f}")
-        odds_cols[3].markdown(f"{away_american}")
+    st.markdown("---")
 
-        with st.expander("📈 Team Metric Trends Over Last 10 Games"):
-            agent.plot_team_metric_trends(home_team, away_team)
+    # ✅ Chatbot UI
+    with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=True):
+        user_input = st.text_input("🧠 Type your question:", key="chat_input_field")
+        if user_input.strip():
+            from tabulate import tabulate
+            import openai
 
-        with st.expander("📊 View Player Feature Comparison Charts"):
-            agent.plot_player_win_probs()
-            agent.plot_player_feature_comparisons()
+            df_home = agent.last_home_player_stats.copy()
+            df_away = agent.last_away_player_stats.copy()
+            df_home["player"] = df_home["firstname"] + " " + df_home["lastname"]
+            df_away["player"] = df_away["firstname"] + " " + df_away["lastname"]
+            df_home["team"] = "Home"
+            df_away["team"] = "Away"
+            combined_df = pd.concat([df_home, df_away], ignore_index=True)
 
-        st.markdown("---")
-        st.markdown("📊 Run again above to test another matchup!")
+            table = tabulate(combined_df[["player", "team", "points", "assists", "turnovers", "plusminuspoints"]], headers="keys", tablefmt="github")
+            prompt = f"""
+You are an expert NBA analyst for ESPN.
+You analyze advanced stats and matchups between two NBA teams.
+
+Use basketball-specific reasoning and explain like a coach or scout:
+- If eFG% is higher, talk about shooting efficiency.
+- If turnovers are high, talk about game flow or transition defense.
+
+Table:
+{table}
+
+Question: {user_input}
+"""
+
+            try:
+                response = openai.ChatCompletion.create(
+                    model="gpt-4",
+                    temperature=0,
+                    messages=[
+                        {"role": "system", "content": "You are a helpful, intelligent NBA data analyst."},
+                        {"role": "user", "content": prompt}
+                    ]
+                )
+                answer = response.choices[0].message["content"]
+            except Exception as e:
+                answer = f"⚠️ Error: {e}"
+
+            st.session_state.chat_history.append(("You", user_input))
+            st.session_state.chat_history.append(("Bot", answer))
+            st.session_state.chat_input = ""
+
+    # Show chat history always
+    if "chat_history" in st.session_state:
+        for role, msg in st.session_state.chat_history[::-1]:
+            bg = "#f1f1f1" if role == "You" else "#d1f5d3"
+            icon = "🧍" if role == "You" else "🤖"
+            st.markdown(f"""
+            <div style='background-color:{bg};padding:10px;border-radius:10px;margin-bottom:5px'>
+            <b>{icon} {role}:</b> {msg}
+            </div>
+            """, unsafe_allow_html=True)
+
 else:
     st.info("👉 Please select both teams and exactly 3 players for each before running predictions.")
 
