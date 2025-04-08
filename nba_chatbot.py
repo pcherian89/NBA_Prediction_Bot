@@ -256,8 +256,6 @@ class GamePredictionAgent:
         return df
 
 
-
-
     def predict_player_win_probability(self, players, team_name, store_attr):
         df = self.get_player_data(players, team_name)
         if df.empty:
@@ -540,12 +538,6 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
                 st.session_state.chat_history.append(("You", user_question))
                 st.session_state.chat_history.append(("Bot", response))
                 st.session_state.chat_input = ""
-
-                
-            response = chatbot.run(st.session_state.chat_input)
-            st.session_state.chat_history.append(("You", st.session_state.chat_input))
-            st.session_state.chat_history.append(("Bot", response))
-            st.session_state.chat_input = ""
     
         # Display chat history
         for role, msg in st.session_state.chat_history[::-1]:
