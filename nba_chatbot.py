@@ -13,9 +13,6 @@ import requests
 from datetime import datetime
 import pytz
 from sqlalchemy import text
-from langchain_experimental.agents import create_pandas_dataframe_agent
-from langchain_openai import ChatOpenAI
-
 
 
 TEAM_NAME_MAPPING = {
@@ -464,7 +461,7 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
         user_input = st.text_input("🧠 Type your question:", key="chat_input_field")
         if user_input.strip():
             from tabulate import tabulate
-            import openai
+            from openai import OpenAI
 
             df_home = agent.last_home_player_stats.copy()
             df_away = agent.last_away_player_stats.copy()
@@ -490,7 +487,9 @@ Question: {user_input}
 """
 
             try:
-                response = openai.ChatCompletion.create(
+                client = openai.OpenAI()
+
+                response = client.chat.completions.create(
                     model="gpt-4",
                     temperature=0,
                     messages=[
@@ -498,7 +497,8 @@ Question: {user_input}
                         {"role": "user", "content": prompt}
                     ]
                 )
-                answer = response.choices[0].message["content"]
+                answer = response.choices[0].message.content
+
             except Exception as e:
                 answer = f"⚠️ Error: {e}"
 
