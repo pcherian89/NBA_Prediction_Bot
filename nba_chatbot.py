@@ -13,7 +13,7 @@ import requests
 from datetime import datetime
 import pytz
 from sqlalchemy import text
-from langchain_experimental.agents import create_pandas_dataframe_agent
+from langchain.agents.agent_toolkits.pandas.base import create_pandas_dataframe_agent
 from langchain_openai import ChatOpenAI
 
 
@@ -482,9 +482,6 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
         )
     
         if st.session_state.chat_input and "agent" in st.session_state:
-    
-            from langchain_experimental.agents import create_pandas_dataframe_agent
-            from langchain_openai import OpenAI
     
             agent = st.session_state.agent
     
