@@ -461,7 +461,7 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
         user_input = st.text_input("🧠 Type your question:", key="chat_input_field")
         if user_input.strip():
             from tabulate import tabulate
-            from openai import OpenAI
+            import openai
 
             df_home = agent.last_home_player_stats.copy()
             df_away = agent.last_away_player_stats.copy()
