@@ -7,11 +7,8 @@ matplotlib
 psycopg2-binary
 xgboost
 beautifulsoup4
-streamlit
-langchain-experimental
-openai
+openai>=1.0.0
 tabulate
-langchain>=0.1.13
-langchain-openai>=0.0.8
+
 
 
