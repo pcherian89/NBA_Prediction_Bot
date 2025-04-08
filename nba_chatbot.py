@@ -497,9 +497,30 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
     
             # 🧠 Prompt
             prompt = f"""
-            You are an expert NBA analyst working for a high-stakes sports analytics firm.
-            Your job is to analyze the matchup using the following tables.
-    
+            You are an advanced NBA Game Analyst Agent. Your task is to provide detailed, insightful analysis of a basketball game based on structured data, including player statistics, team trends, and recent performance metrics.
+
+            Use the following information:
+            
+            Player win probabilities, key individual stats (points, assists, rebounds, shooting %, usage rate, etc.)
+            
+            Team performance trends from the last 10 games (e.g., rebounding %, assist-to-turnover ratio, effective FG%)
+            
+            Predicted win probabilities and betting odds
+            
+            Your response should include:
+            
+            Key strengths and weaknesses of each team based on recent metrics
+            
+            Standout players to watch and their likely impact on the outcome
+            
+            Noteworthy trends (e.g., rebounding dominance, turnover issues, shooting efficiency)
+            
+            Any statistical mismatches or factors that could swing the game
+            
+            A balanced prediction summary based on the data
+            
+            Focus on reasoning and comparative analysis. Avoid vague or generic comments—be precise and data-driven in your observations.
+                
             🏀 Team Stats (last 10 games):
             {team_stat_table}
     
