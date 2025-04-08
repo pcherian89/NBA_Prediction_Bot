@@ -460,22 +460,25 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
     odds_cols[2].markdown(f"{away_decimal:.2f}")
     odds_cols[3].markdown(f"{away_american}")
 
-    with st.expander("📈 Team Metric Trends Over Last 10 Games"):
-        agent.plot_team_metric_trends(result["home_team"], result["away_team"])
-
-    with st.expander("📊 View Player Feature Comparison Charts"):
-        agent.plot_player_win_probs()
-        agent.plot_player_feature_comparisons()
-
     st.markdown("---")
 
     # ✅ Chatbot UI
     with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=True):
         user_input = st.text_input("🧠 Type your question:", key="chat_input_field")
+    
+        # 📈 Chart tools inside chatbot for visual + question
+        with st.expander("📈 Team Metric Trends Over Last 10 Games"):
+            agent.plot_team_metric_trends(result["home_team"], result["away_team"])
+    
+        with st.expander("📊 View Player Feature Comparison Charts"):
+            agent.plot_player_win_probs()
+            agent.plot_player_feature_comparisons()
+    
+        # 🧠 Now respond only if question is typed
         if user_input.strip():
             from tabulate import tabulate
             import openai
-    
+            ...
             # 🧠 Player stats
             df_home = agent.last_home_player_stats.copy()
             df_away = agent.last_away_player_stats.copy()
