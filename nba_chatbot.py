@@ -281,8 +281,8 @@ class GamePredictionAgent:
 
         setattr(self, store_attr, player_stats)
 
-        st.markdown(f"#### 🔍 Win Probabilities for {team_name} Players")
-        st.dataframe(player_stats[["firstname", "lastname", "win_probability"] + model_features])
+        # st.markdown(f"#### 🔍 Win Probabilities for {team_name} Players")
+        # st.dataframe(player_stats[["firstname", "lastname", "win_probability"] + model_features])
         return {"team_average_win_probability": round(player_stats["win_probability"].mean(), 4)}
 
     def get_team_data(self, team_name):
@@ -309,8 +309,8 @@ class GamePredictionAgent:
 
         setattr(self, store_attr, df)
 
-        st.markdown(f"#### 🔍 {team_name} - Last 10 Games")
-        st.dataframe(df[["gamedate", "win", "win_probability"] + feature_cols])
+        # st.markdown(f"#### 🔍 {team_name} - Last 10 Games")
+        # st.dataframe(df[["gamedate", "win", "win_probability"] + feature_cols])
 
         return {"average_team_win_probability": round(df["win_probability"].mean(), 4)}
 
@@ -406,14 +406,20 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
     result = st.session_state.prediction_result
 
     # 📊 Tables always visible
-    st.markdown("### 📊 Win Probabilities for Home Players")
+    st.markdown("### 📊 Home Team - Player Stats")
     st.dataframe(agent.last_home_player_stats)
-    st.markdown("### 📊 Win Probabilities for Away Players")
+    st.markdown("### 📊 Away Team - Player Stats")
     st.dataframe(agent.last_away_player_stats)
+    # ✅ Show filtered team stats (just the key features)
     st.markdown("### 🧠 Home Team - Last 10 Games")
-    st.dataframe(agent.last_home_team_df)
+    st.dataframe(agent.last_home_team_df[["gamedate", "win", "win_probability", 
+                                          "ast_to_ratio_home", "reb_percentage_home", 
+                                          "efg_percentage_home", "free_throw_rate"]])
+    
     st.markdown("### 🧠 Away Team - Last 10 Games")
-    st.dataframe(agent.last_away_team_df)
+    st.dataframe(agent.last_away_team_df[["gamedate", "win", "win_probability", 
+                                          "ast_to_ratio_home", "reb_percentage_home", 
+                                          "efg_percentage_home", "free_throw_rate"]])
 
     # 🎲 Convert Win % to Odds
     def win_prob_to_decimal_odds(prob): return round(1 / prob, 2)
