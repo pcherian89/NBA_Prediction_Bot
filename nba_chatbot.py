@@ -13,8 +13,9 @@ import requests
 from datetime import datetime
 import pytz
 from sqlalchemy import text
-from langchain.agents.agent_toolkits.pandas.base import create_pandas_dataframe_agent
+from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain_openai import ChatOpenAI
+
 
 os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
@@ -501,7 +502,7 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
     
             combined_df = pd.concat([df_home, df_away, df_team_home, df_team_away], ignore_index=True)
     
-            # ✅ Custom system prompt to guide the chatbot
+            # 1️⃣ Define your system prompt
             custom_prompt = """
             You are an expert NBA analyst working for a high-stakes sports analytics firm.
             Your job is to analyze tabular data comparing two NBA teams and their top players.
@@ -515,29 +516,31 @@ if "prediction_result" in st.session_state and "agent" in st.session_state:
             NEVER give generic pandas code explanations. Only provide human-like, data-driven basketball insight.
             """
             
-            # 🧠 Use ChatOpenAI with custom prompt manually injected
-
+            # 2️⃣ Create the LLM
             llm = ChatOpenAI(
                 temperature=0,
-                model="gpt-4"
+                model="gpt-4"  # or "gpt-3.5-turbo"
             )
             
+            # 3️⃣ Create the agent
             chatbot = create_pandas_dataframe_agent(
                 llm=llm,
-                df=combined_df,
+                df=combined_df,  # your merged team + player DataFrame
                 verbose=False,
                 handle_parsing_errors=True
             )
             
-            # ⛳️ Inject custom prompt directly into the user input
+            # 4️⃣ Inject the custom prompt into the user query
             user_question = st.session_state.chat_input.strip()
             if user_question:
                 full_prompt = custom_prompt + "\n\nUser Question: " + user_question
                 response = chatbot.run(full_prompt)
             
+                # Save and display
                 st.session_state.chat_history.append(("You", user_question))
                 st.session_state.chat_history.append(("Bot", response))
                 st.session_state.chat_input = ""
+
     
         # Display chat history
         for role, msg in st.session_state.chat_history[::-1]:
