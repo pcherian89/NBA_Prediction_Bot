@@ -396,6 +396,90 @@ if (
         st.success("✅ Prediction complete!")
         st.markdown("### 🎯 Final Win Probabilities")
         st.markdown(f"<h3 style='text-align: center;'>{result['home_team']} (Home): <span style='color:{HOME_COLOR}'>{result['home_final_probability']:.2f}</span> &nbsp;&nbsp;|&nbsp;&nbsp; {result['away_team']} (Away): <span style='color:{AWAY_COLOR}'>{result['away_final_probability']:.2f}</span></h3>", unsafe_allow_html=True)
+        st.session_state.agent = agent
+        st.session_state.prediction_result = result
+
+        # ✅ Chatbot UI input
+        if "prediction_result" in st.session_state and "agent" in st.session_state:
+        
+            if "chat_history" not in st.session_state:
+                st.session_state.chat_history = []
+        
+            if "chat_input" not in st.session_state:
+                st.session_state.chat_input = ""
+        
+            with st.expander("💬 Ask the NBA Bot About This Matchup", expanded=True):
+                st.session_state.chat_input = st.text_input(
+                    "🧠 Type your question:",
+                    value=st.session_state.chat_input,
+                    key="chat_input_field"
+                )
+        
+            # 🧠 Step 4: Run OpenAI with Custom Prompt
+            import openai
+            from tabulate import tabulate
+        
+            # Define custom system prompt
+            system_prompt = """
+            You are an expert NBA analyst working for a high-stakes sports analytics firm.
+            Your job is to analyze the matchup between two NBA teams and their key players.
+            Always explain what the numbers mean in basketball context — not just averages.
+        
+            Use basketball terminology. Think like a coach or scout.
+            If one team has higher eFG%, explain it’s due to better shooting.
+            If a player has more turnovers, explain how that affects game flow.
+        
+            NEVER give pandas code explanations.
+            Only provide human-like, data-driven basketball insights.
+            """
+        
+            user_question = st.session_state.chat_input.strip()
+        
+            if user_question:
+                # Get latest stats
+                agent = st.session_state.agent
+                df_home = agent.last_home_player_stats.copy()
+                df_away = agent.last_away_player_stats.copy()
+                df_home["team"] = "Home"
+                df_away["team"] = "Away"
+                df_home["player"] = df_home["firstname"] + " " + df_home["lastname"]
+                df_away["player"] = df_away["firstname"] + " " + df_away["lastname"]
+        
+                combined_df = pd.concat([df_home, df_away], ignore_index=True)
+                stat_table = tabulate(combined_df[["player", "team", "points", "assists", "turnovers", "plusminuspoints"]], headers="keys", tablefmt="github")
+        
+                # Inject data + question
+                full_prompt = f"{system_prompt}\n\nPlayer Stats Table:\n{stat_table}\n\nUser Question: {user_question}"
+        
+                try:
+                    response = openai.ChatCompletion.create(
+                        model="gpt-4",  # or "gpt-3.5-turbo"
+                        temperature=0,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": full_prompt}
+                        ]
+                    )
+                    answer = response.choices[0].message["content"]
+        
+                except Exception as e:
+                    answer = f"⚠️ Error: {e}"
+        
+                # Step 5: Save and display the chat
+                st.session_state.chat_history.append(("You", user_question))
+                st.session_state.chat_history.append(("Bot", answer))
+                st.session_state.chat_input = ""
+        
+            # 💬 Display Chat History
+            for role, msg in st.session_state.chat_history[::-1]:
+                bg = "#f1f1f1" if role == "You" else "#d1f5d3"
+                icon = "🧍" if role == "You" else "🤖"
+                st.markdown(f"""
+                <div style='background-color:{bg};padding:10px;border-radius:10px;margin-bottom:5px'>
+                <b>{icon} {role}:</b> {msg}
+                </div>
+                """, unsafe_allow_html=True)
+
 
         # 🎲 Convert Win % to Odds
         def win_prob_to_decimal_odds(prob):
