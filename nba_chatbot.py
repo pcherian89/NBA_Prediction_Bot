@@ -98,7 +98,7 @@ engine = create_engine(f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT
 
 # ✅ Streamlit Setup
 st.set_page_config(page_title="AI-Powered NBA Game Analyzer", layout="wide")
-st.title("📊 AI-Powered NBA Game Analyzer")
+st.title("🎯 AI-Powered NBA Game Analyzer")
 
 st.markdown("""
 Welcome to the **NBA Analytics Platform**!  
